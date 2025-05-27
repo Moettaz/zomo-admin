@@ -210,13 +210,13 @@
 <body>
     <div class="sidebar">
     <div class="logo-container">
-        <img src="zomo.png" alt="Logo Zomo" class="logo">
+                <img src="assets/zomo.png" alt="Zomo Logo" class="logo">
     </div>
     <ul>
-        <li><a href="" style="color: #FDBA1B; font-weight: 500;"><span>Dashboard</span></a></li>
-        <li><a href="clients.html" class="active"><span>Utilisateurs</span></a></li>
+        <li><a href="dashboard.html"><span>Dashboard</span></a></li>
+        <li><a href="clients.html"><span>Clients</span></a></li>
         <li><a href="evaluation.html"><span>Evaluations</span></a></li>
-        <li><a href="notifications.html"><span>Notifications</span></a></li>
+        <li><a href="notifications.html" class="active"><span>Notifications</span></a></li>
         <li><a href="paiement.html"><span>Paiements</span></a></li>
     </ul>
     <div class="logout">
@@ -255,31 +255,62 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>1</td>
-                            <td>2</td>
-                            <td>101</td>
-                            <td>Demande de service</td>
-                            <td>Votre demande de service a été acceptée.</td>
-                            <td>non lu</td>
-                            <td>2024-07-28 10:00:00</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>3</td>
-                            <td>1</td>
-                            <td>102</td>
-                            <td>Confirmation de paiement</td>
-                            <td>Votre paiement de 50 $ a été confirmé.</td>
-                            <td>lu</td>
-                            <td>2024-07-27 14:30:00</td>
-                        </tr>
+                        <!-- Data will be loaded dynamically -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tableBody = document.querySelector('.notification-table tbody');
+        // Show loading state
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Chargement des données...</td></tr>';
+
+        fetch('http://127.0.0.1:8000/api/notifications', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            mode: 'cors'
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            tableBody.innerHTML = '';
+            if (!data.data || data.data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Aucune notification trouvée</td></tr>';
+                return;
+            }
+            data.data.forEach(notification => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${notification.id || ''}</td>
+                    <td>${notification.sender_id || ''}</td>
+                    <td>${notification.receiver_id || ''}</td>
+                    <td>${notification.service_id || ''}</td>
+                    <td>${notification.type || ''}</td>
+                    <td>${notification.message || ''}</td>
+                    <td>${notification.status || ''}</td>
+                    <td>${notification.created_at || ''}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('Error details:', error);
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: red;">Erreur lors du chargement des données: ${error.message}</td></tr>`;
+        });
+    });
+    </script>
 </body>
 </html>

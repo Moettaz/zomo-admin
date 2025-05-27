@@ -239,14 +239,14 @@
 <body>
     <div class="sidebar">
     <div class="logo-container">
-        <img src="zomo.png" alt="Logo Zomo" class="logo">
+        <img src="assets/zomo.png" alt="Zomo Logo" class="logo">
     </div>
     <ul>
-        <li><a href="" style="color: #FDBA1B; font-weight: 500;"><span>Dashboard</span></a></li>
-        <li><a href="clients.html" class="active"><span>Utilisateurs</span></a></li>
+        <li><a href="dashboard.html"><span>Dashboard</span></a></li>
+        <li><a href="clients.html"><span>Clients</span></a></li>
         <li><a href="evaluation.html"><span>Evaluations</span></a></li>
         <li><a href="notifications.html"><span>Notifications</span></a></li>
-        <li><a href="paiement.html"><span>Paiements</span></a></li>
+        <li><a href="paiement.html" class="active"><span>Paiements</span></a></li>
     </ul>
     <div class="logout">
         <a href="connexion.html" onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
@@ -286,39 +286,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>1</td>
-                            <td>2</td>
-                            <td>101</td>
-                            <td>50.00 dt</td>
-                            <td>Carte de crédit</td>
-                            <td>2024-07-28 12:00:00</td>
-                            <td><span class="status-confirmed">Confirmé</span></td>
-                            <td>REF12345</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>3</td>
-                            <td>1</td>
-                            <td>102</td>
-                            <td>25.00 dt</td>
-                            <td>PayPal</td>
-                            <td>2024-07-27 09:30:00</td>
-                            <td><span class="status-pending">En attente</span></td>
-                            <td>REF67890</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>2</td>
-                            <td>3</td>
-                            <td>103</td>
-                            <td>75.50 dt</td>
-                            <td>Virement</td>
-                            <td>2024-07-26 15:45:00</td>
-                            <td><span class="status-confirmed">Confirmé</span></td>
-                            <td>REF54321</td>
-                        </tr>
+                        <!-- Data will be loaded dynamically -->
                     </tbody>
                 </table>
             </div>
@@ -326,8 +294,54 @@
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Ajouter des fonctionnalités interactives si nécessaire
+        document.addEventListener("DOMContentLoaded", function () {
+            const tableBody = document.querySelector('.payment-table tbody');
+            // Show loading state
+            tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Chargement des données...</td></tr>';
+
+            fetch('http://127.0.0.1:8000/api/paiements', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                mode: 'cors'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                tableBody.innerHTML = '';
+                if (!data.data || data.data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Aucun paiement trouvé</td></tr>';
+                    return;
+                }
+                data.data.forEach(paiement => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${paiement.id || ''}</td>
+                        <td>${paiement.client_id || ''}</td>
+                        <td>${paiement.transporteur_id || ''}</td>
+                        <td>${paiement.service_id || ''}</td>
+                        <td>${paiement.montant || ''} dt</td>
+                        <td>${paiement.methode_paiement || ''}</td>
+                        <td>${paiement.date_paiement || ''}</td>
+                        <td><span class="status-${paiement.status === 'confirmed' ? 'confirmed' : 'pending'}">${paiement.status || ''}</span></td>
+                        <td>${paiement.reference || ''}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error details:', error);
+                tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: red;">Erreur lors du chargement des données: ${error.message}</td></tr>`;
+            });
         });
     </script>
 </body>

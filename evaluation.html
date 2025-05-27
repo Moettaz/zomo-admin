@@ -205,12 +205,12 @@
 <body>
    <div class="sidebar">
     <div class="logo-container">
-        <img src="zomo.png" alt="Logo Zomo" class="logo">
+        <img src="assets/zomo.png" alt="Zomo Logo" class="logo">
     </div>
     <ul>
-        <li><a href="" style="color: #FDBA1B; font-weight: 500;"><span>Dashboard</span></a></li>
-        <li><a href="clients.html" class="active"><span>Utilisateurs</span></a></li>
-        <li><a href="evaluation.html"><span>Evaluations</span></a></li>
+        <li><a href="dashboard.html"><span>Dashboard</span></a></li>
+        <li><a href="clients.html"><span>Clients</span></a></li>
+        <li><a href="evaluation.html" class="active"><span>Evaluations</span></a></li>
         <li><a href="notifications.html"><span>Notifications</span></a></li>
         <li><a href="paiement.html"><span>Paiements</span></a></li>
     </ul>
@@ -239,27 +239,71 @@
                 <table class="evaluation-table">
                     <thead>
                         <tr>
-                            <th>Client ID</th>
-                            <th>Transporteur ID</th>
+                            <th>Client</th>
+                            <th>Transporteur</th>
                             <th>Note</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>10</td>
-                            <td>5</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>25</td>
-                            <td>12</td>
-                        </tr>
+                        <!-- Data will be loaded dynamically -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const tableBody = document.querySelector('.evaluation-table tbody');
+            
+            // Show loading state
+            tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Chargement des données...</td></tr>';
+            
+            // Fetch evaluations from API
+            fetch('http://127.0.0.1:8000/api/evaluations', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'include',
+                mode: 'cors'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data); // Debug log
+                tableBody.innerHTML = ''; // Clear loading state
+                
+                if (!data.data || data.data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucune évaluation trouvée</td></tr>';
+                    return;
+                }
+                
+                data.data.forEach(evaluation => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${evaluation.client?.username || 'N/A'}</td>
+                        <td>${evaluation.transporteur?.username || 'N/A'}</td>
+                        <td>${evaluation.note || 'N/A'}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error details:', error);
+                tableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">
+                    Erreur lors du chargement des données: ${error.message}
+                </td></tr>`;
+            });
+        });
+    </script>
 </body>
 </html>
