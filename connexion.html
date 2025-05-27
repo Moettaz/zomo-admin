@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion Admin</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: url('bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 350px;
+        }
+
+        .login-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+
+        .login-button {
+            background-color: #FDBA1B;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1em;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2 class="login-title">Connexion Admin</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="text" id="email" name="email">
+                <div id="emailError" class="error-message" style="display:none;"></div>
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password">
+                <div id="passwordError" class="error-message" style="display:none;"></div>
+            </div>
+            <button type="submit" class="login-button">Se connecter</button>
+            <div id="loginError" class="error-message" style="display:none; margin-top: 10px; text-align: center; font-weight: bold;">Identifiants incorrects</div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            
+            event.preventDefault();
+            
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const emailErrorDiv = document.getElementById('emailError');
+            const passwordErrorDiv = document.getElementById('passwordError');
+            const loginErrorDiv = document.getElementById('loginError');
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+          
+
+            emailErrorDiv.style.display = 'none';
+            passwordErrorDiv.style.display = 'none';
+            loginErrorDiv.style.display = 'none';
+
+            let hasError = false;
+
+            if (!email) {
+                console.log('Erreur: email vide');
+                emailErrorDiv.textContent = 'Veuillez saisir votre email.';
+                emailErrorDiv.style.display = 'block';
+                hasError = true;
+            }
+
+            if (!password) {
+                console.log('Erreur: password vide');
+                passwordErrorDiv.textContent = 'Veuillez saisir votre mot de passe.';
+                passwordErrorDiv.style.display = 'block';
+                hasError = true;
+            }
+
+            if (hasError) {
+                console.log('Erreurs de validation, arrêt du processus');
+                return;
+            }
+
+            
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8001/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                
+                const data = await response.json();
+                
+
+                if (response.ok) {
+                   
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                    }
+                    window.location.href = 'clients.html';
+                } else {
+                    
+                    loginErrorDiv.textContent = data.message || 'Identifiants incorrects.';
+                    loginErrorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    loginErrorDiv.textContent = 'Impossible de se connecter au serveur. Vérifiez que le serveur est en cours d\'exécution sur http://127.0.0.1:8001';
+                } else {
+                    loginErrorDiv.textContent = 'Erreur de connexion au serveur: ' + error.message;
+                }
+                loginErrorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
